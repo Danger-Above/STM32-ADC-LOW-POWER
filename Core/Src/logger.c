@@ -33,4 +33,12 @@ void logger_init(UART_HandleTypeDef *huart)
     logger_sendln("");
 }
 
+void logger_csv_init(const char *s)
+{
+	logger_sendln("");
+}
 
+void logger_csv_send(uint32_t time, uint16_t val)
+{
+
+}

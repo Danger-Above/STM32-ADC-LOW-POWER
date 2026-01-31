@@ -96,6 +96,7 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   adc_results_t results = {0, 0};
+  adc_filter_ma_t filter = {{0}, 0, 0, 0};
   uint32_t last_tick = 0;
   uint32_t time = 0;
 
@@ -118,9 +119,9 @@ int main(void)
 		  last_tick = tick;
 
 		  adc_read_raw_blocking(&results);
+		  adc_filter_ma(&filter, &results);
 
-
-		  snprintf(string_buff, sizeof(string_buff), "%ld %04d", time, results.raw);
+		  snprintf(string_buff, sizeof(string_buff), "%ld %04d %ld", time, results.raw, results.filtered);
 
 		  logger_sendln(string_buff);
 		  time += MEASURE_PERIOD_MS;
