@@ -9,6 +9,19 @@
 
 static ADC_HandleTypeDef *adc_handle = NULL;
 
+static uint8_t adc_clamp_percent(uint32_t value)
+{
+	if (value > 100)
+	{
+		value = 100;
+	}
+	else if (value < 0)
+	{
+		value = 0;
+	}
+	return value;
+}
+
 void adc_init(ADC_HandleTypeDef *adc)
 {
 	adc_handle = adc;
@@ -48,4 +61,15 @@ void adc_filter_ma(adc_filter_ma_t *filter, adc_results_t *results)
     results->filtered = (uint16_t)(filter->sum / filter->filled);
 }
 
+uint8_t adc_result_to_percent(uint16_t value)
+{
+	if ((ADC_CALLIB_MAX_VAL - ADC_CALLIB_MIN_VAL) == 0)
+	{
+		return 0;
+	}
+
+	uint32_t result = ((value - ADC_CALLIB_MIN_VAL) * 100)/(ADC_CALLIB_MAX_VAL - ADC_CALLIB_MIN_VAL);
+
+	return adc_clamp_percent(result);
+}
 

@@ -11,6 +11,8 @@
 #include "stm32l4xx_hal.h"
 
 #define ADC_FILTER_MA_WINDOW_SIZE 16
+#define ADC_CALLIB_MAX_VAL 4095
+#define ADC_CALLIB_MIN_VAL 0
 
 typedef struct {
 	uint16_t raw;
@@ -28,5 +30,6 @@ typedef struct {
 void adc_init(ADC_HandleTypeDef *handle);
 void adc_read_raw_blocking(adc_results_t *results);
 void adc_filter_ma(adc_filter_ma_t *filter, adc_results_t *results);
+uint8_t adc_result_to_percent(uint16_t value);
 
 #endif /* SRC_ADC_H_ */

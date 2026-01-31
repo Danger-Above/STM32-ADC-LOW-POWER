@@ -100,6 +100,7 @@ int main(void)
   uint32_t last_tick = 0;
   uint32_t time = 0;
 
+  uint8_t result_percent = 0;
   char string_buff[32];
 
   logger_init(&huart2);
@@ -121,7 +122,9 @@ int main(void)
 		  adc_read_raw_blocking(&results);
 		  adc_filter_ma(&filter, &results);
 
-		  snprintf(string_buff, sizeof(string_buff), "%ld %04d %ld", time, results.raw, results.filtered);
+		  result_percent = adc_result_to_percent(results.filtered);
+
+		  snprintf(string_buff, sizeof(string_buff), "%ld %04d %ld %u", time, results.raw, results.filtered, result_percent);
 
 		  logger_sendln(string_buff);
 		  time += MEASURE_PERIOD_MS;
