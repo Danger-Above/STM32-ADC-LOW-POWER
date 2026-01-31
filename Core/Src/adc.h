@@ -1,0 +1,24 @@
+/*
+ * adc.h
+ *
+ *  Created on: Jan 31, 2026
+ *      Author: Adam
+ */
+
+#ifndef SRC_ADC_H_
+#define SRC_ADC_H_
+
+#include "stm32l4xx_hal.h"
+
+#define ADC_FILTER_MA_WINDOW_SIZE 16
+
+typedef struct {
+	uint16_t raw;
+	uint32_t filtered;
+	uint8_t percent;
+} adc_results_t;
+
+void adc_init(ADC_HandleTypeDef *handle);
+void adc_read_raw_blocking(adc_results_t *results);
+
+#endif /* SRC_ADC_H_ */

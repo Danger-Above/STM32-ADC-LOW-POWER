@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "adc.h"
 #include "logger.h"
 #include "stdio.h"
 /* USER CODE END Includes */
@@ -94,30 +95,35 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  uint16_t result = 0;
+  adc_results_t results = {0, 0};
   uint32_t last_tick = 0;
+  uint32_t time = 0;
+
+  char string_buff[32];
 
   logger_init(&huart2);
+  adc_init(&hadc1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //todo pomiar przez staly okres czasu np. 5 sekund by latwy wykres byl
+	  //todo software oversampling
+	  //todo inny filtr
 	  uint32_t tick = HAL_GetTick();
 	  if ((tick - last_tick) >= MEASURE_PERIOD_MS)
 	  {
 		  last_tick = tick;
 
-		  HAL_ADC_Start(&hadc1);
-		  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-		  result = HAL_ADC_GetValue(&hadc1);
-		  HAL_ADC_Stop(&hadc1);
+		  adc_read_raw_blocking(&results);
 
-		  char buff[5];
-		  snprintf(buff, sizeof(buff), "raw= %04d", result);
 
-		  logger_sendln(buff);
+		  snprintf(string_buff, sizeof(string_buff), "%ld %04d", time, results.raw);
+
+		  logger_sendln(string_buff);
+		  time += MEASURE_PERIOD_MS;
 	  }
     /* USER CODE END WHILE */
 

@@ -32,3 +32,5 @@ void logger_init(UART_HandleTypeDef *huart)
     logger_sendln("=== Logger for ADC ===");
     logger_sendln("");
 }
+
+
