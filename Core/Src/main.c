@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "logger.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define MEASURE_PERIOD_MS 100
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -93,13 +94,31 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+  uint16_t result = 0;
+  uint32_t last_tick = 0;
 
+  logger_init(&huart2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  uint32_t tick = HAL_GetTick();
+	  if ((tick - last_tick) >= MEASURE_PERIOD_MS)
+	  {
+		  last_tick = tick;
+
+		  HAL_ADC_Start(&hadc1);
+		  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+		  result = HAL_ADC_GetValue(&hadc1);
+		  HAL_ADC_Stop(&hadc1);
+
+		  char buff[5];
+		  snprintf(buff, sizeof(buff), "raw= %04d", result);
+
+		  logger_sendln(buff);
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
