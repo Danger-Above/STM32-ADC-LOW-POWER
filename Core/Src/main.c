@@ -21,9 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "adc.h"
+#include "app.h"
 #include "logger.h"
-#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,18 +94,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  adc_results_t results = {0, 0};
-  adc_filter_ma_t filter = {{0}, 0, 0, 0};
-  uint32_t last_tick = 0;
-  uint32_t time = 0;
-
-  uint8_t result_percent = 0;
-  char string_buff[32];
-
-  logger_init(&huart2);
-  adc_init(&hadc1);
+  app_init(&hadc1, &huart2);
   /* USER CODE END 2 */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -114,21 +103,10 @@ int main(void)
 	  //todo pomiar przez staly okres czasu np. 5 sekund by latwy wykres byl
 	  //todo software oversampling
 	  //todo inny filtr
-	  uint32_t tick = HAL_GetTick();
-	  if ((tick - last_tick) >= MEASURE_PERIOD_MS)
-	  {
-		  last_tick = tick;
+	  //todo autokalibracja potencjometru
+	  //todo doczytac o dzialaniu adc (gdzie vref)
 
-		  adc_read_raw_blocking(&results);
-		  adc_filter_ma(&filter, &results);
-
-		  result_percent = adc_result_to_percent(results.filtered);
-
-		  snprintf(string_buff, sizeof(string_buff), "%ld %04d %ld %u", time, results.raw, results.filtered, result_percent);
-
-		  logger_sendln(string_buff);
-		  time += MEASURE_PERIOD_MS;
-	  }
+	  app_run(MEASURE_PERIOD_MS);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

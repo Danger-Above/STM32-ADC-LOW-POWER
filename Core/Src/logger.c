@@ -6,7 +6,6 @@
  */
 
 #include "string.h"
-
 #include "logger.h"
 
 static UART_HandleTypeDef *logger_huart = NULL;

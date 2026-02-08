@@ -5,6 +5,9 @@
  *      Author: Adam
  */
 
+#define ADC_CALLIB_MAX_VAL 3960
+#define ADC_CALLIB_MIN_VAL 0
+
 #include "adc.h"
 
 static ADC_HandleTypeDef *adc_handle = NULL;
