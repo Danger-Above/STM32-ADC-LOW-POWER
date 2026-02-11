@@ -20,8 +20,8 @@ static char string_buff[32];
 
 void app_init(ADC_HandleTypeDef *hadc, UART_HandleTypeDef *huart)
 {
-	  logger_init(huart);
-	  adc_init(hadc);
+	logger_init(huart);
+	adc_init(hadc);
 }
 
 void app_run(uint16_t measure_period, uint32_t number)
