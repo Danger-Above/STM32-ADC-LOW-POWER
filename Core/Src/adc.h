@@ -15,7 +15,7 @@
 
 typedef struct {
 	uint16_t raw;
-	uint32_t filtered;
+	uint16_t filtered;
 	uint8_t percent;
 } adc_results_t;
 

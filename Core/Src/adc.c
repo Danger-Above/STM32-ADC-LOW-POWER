@@ -5,8 +5,8 @@
  *      Author: Adam
  */
 
-#define ADC_CALLIB_MAX_VAL 3960
-#define ADC_CALLIB_MIN_VAL 0
+#define ADC_CALIB_MAX_VAL 3960
+#define ADC_CALIB_MIN_VAL 0
 
 #include "adc.h"
 
@@ -72,12 +72,12 @@ void adc_filter_ma(adc_filter_ma_t *filter, adc_results_t *results)
 
 uint8_t adc_result_to_percent(uint16_t value)
 {
-	if ((ADC_CALLIB_MAX_VAL - ADC_CALLIB_MIN_VAL) == 0)
+	if ((ADC_CALIB_MAX_VAL - ADC_CALIB_MIN_VAL) == 0)
 	{
 		return 0;
 	}
 
-	uint32_t result = ((value - ADC_CALLIB_MIN_VAL) * 100)/(ADC_CALLIB_MAX_VAL - ADC_CALLIB_MIN_VAL);
+	uint32_t result = ((value - ADC_CALIB_MIN_VAL) * 100)/(ADC_CALIB_MAX_VAL - ADC_CALIB_MIN_VAL);
 
 	return adc_clamp_percent(result);
 }
