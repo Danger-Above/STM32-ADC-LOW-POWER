@@ -10,9 +10,11 @@
 
 #include "stdint.h"
 #include "stm32l4xx_hal.h"
+#include "adc.h"
 
 void app_init(ADC_HandleTypeDef *handle, UART_HandleTypeDef *huart);
-void app_run(uint16_t measure_period);
+void app_restore_init_state(void);
+adc_results_t app_run(void);
 
 
 #endif /* SRC_APP_H_ */

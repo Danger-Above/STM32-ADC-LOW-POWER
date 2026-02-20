@@ -21,8 +21,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stdio.h"
 #include "app.h"
 #include "logger.h"
+#include "adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,7 +34,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MEASURE_PERIOD_MS 100
+#define MEASURE_PERIOD_MS 10 //miliseconds
+#define TEST_TIME 5000 //miliseconds
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,12 +46,16 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
-RTC_HandleTypeDef hrtc;
+TIM_HandleTypeDef htim6;
 
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-static volatile uint8_t measure = 1;
+static volatile uint8_t measure = 0;
+static volatile uint8_t run = 0;
+static volatile uint8_t test_complete = 1;
+static volatile uint32_t tick = 0;
+static volatile uint32_t last_tick = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,7 +63,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_RTC_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -96,29 +103,64 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
-  MX_RTC_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   app_init(&hadc1, &huart2);
 
-  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 200, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+  adc_results_t result_table[TEST_TIME/MEASURE_PERIOD_MS];
+  uint32_t run_time = 0;
+  uint8_t measurement_complete = 0;
+  uint16_t index = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  tick = HAL_GetTick();
+	  if (run)
+	  {
+		  run = 0;
+		  test_complete = 0;
+
+		  HAL_TIM_Base_Start_IT(&htim6);
+		  logger_sendln("Run start");
+	  }
 	  if (measure)
 	  {
 		  measure = 0;
-		  app_run(MEASURE_PERIOD_MS);
+
+		  if (index < (sizeof(result_table)/sizeof(result_table[0])))
+		  {
+			  result_table[index] = app_run();
+		  }
+		  run_time += MEASURE_PERIOD_MS;
+		  ++index;
 	  }
-	  HAL_SuspendTick();
+	  if (run_time >= TEST_TIME)
+	  {
+		  measurement_complete = 1;
 
-	  HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
+		  run_time = 0;
+		  index = 0;
+		  HAL_TIM_Base_Stop_IT(&htim6);
+		  logger_sendln("Run stop");
+	  }
+	  if (measurement_complete)
+	  {
+		  measurement_complete = 0;
 
-	  HAL_ResumeTick();
-	  SystemClock_Config();
-	  HAL_ADC_MspInit(&hadc1);
+		  logger_sendln("t_ms,raw,filtered,percent");
+		  char text_buffer[32];
+		  for (uint16_t i = 0; i < (sizeof(result_table)/sizeof(result_table[0])); i++)
+		  {
+			  snprintf(text_buffer, sizeof(text_buffer), "%ld,%04d,%04d,%u",
+					  (uint32_t)((i + 1) * MEASURE_PERIOD_MS), result_table[i].raw, result_table[i].filtered, result_table[i].percent);
+			  logger_sendln(text_buffer);
+		  }
+		  app_restore_init_state();
+		  test_complete = 1;
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -145,10 +187,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
@@ -244,38 +285,40 @@ static void MX_ADC1_Init(void)
 }
 
 /**
-  * @brief RTC Initialization Function
+  * @brief TIM6 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_RTC_Init(void)
+static void MX_TIM6_Init(void)
 {
 
-  /* USER CODE BEGIN RTC_Init 0 */
+  /* USER CODE BEGIN TIM6_Init 0 */
 
-  /* USER CODE END RTC_Init 0 */
+  /* USER CODE END TIM6_Init 0 */
 
-  /* USER CODE BEGIN RTC_Init 1 */
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  /* USER CODE END RTC_Init 1 */
+  /* USER CODE BEGIN TIM6_Init 1 */
 
-  /** Initialize RTC Only
-  */
-  hrtc.Instance = RTC;
-  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
-  hrtc.Init.AsynchPrediv = 127;
-  hrtc.Init.SynchPrediv = 255;
-  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
-  hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
-  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 7999;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 99;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN RTC_Init 2 */
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
 
-  /* USER CODE END RTC_Init 2 */
+  /* USER CODE END TIM6_Init 2 */
 
 }
 
@@ -321,6 +364,7 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
@@ -330,15 +374,40 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
+  /*Configure GPIO pin : BTN1_Pin */
+  GPIO_InitStruct.Pin = BTN1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BTN1_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_RTCEx_WakeUpTimerEventCallback(RTC_HandleTypeDef *hrtc)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	++measure;
+    if (htim->Instance == TIM6) {
+        ++measure;
+    }
 }
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if ((last_tick + 200) < tick)
+	{
+		if (GPIO_Pin == BTN1_Pin && test_complete)
+		{
+			++run;
+		}
+		last_tick = tick;
+	}
+}
+
 
 /* USER CODE END 4 */
 

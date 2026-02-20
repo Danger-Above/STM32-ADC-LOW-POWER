@@ -11,7 +11,7 @@
 #include "stdint.h"
 #include "stm32l4xx_hal.h"
 
-#define ADC_FILTER_MA_WINDOW_SIZE 16
+#define ADC_FILTER_MA_WINDOW_SIZE 8
 
 typedef struct {
 	uint16_t raw;

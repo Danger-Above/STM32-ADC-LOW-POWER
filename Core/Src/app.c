@@ -6,16 +6,13 @@
  */
 #include "stdio.h"
 #include "logger.h"
-#include "adc.h"
+#include "app.h"
 
 
 #define APP_ENABLE_LOG 1
 
-
 static adc_results_t results = {0, 0, 0};
 static adc_filter_ma_t filter = {{0}, 0, 0, 0};
-
-static char string_buff[32];
 
 void app_init(ADC_HandleTypeDef *hadc, UART_HandleTypeDef *huart)
 {
@@ -23,21 +20,26 @@ void app_init(ADC_HandleTypeDef *hadc, UART_HandleTypeDef *huart)
 	adc_init(hadc);
 }
 
-void app_run(uint16_t measure_period, uint32_t number)
+void app_restore_init_state(void)
 {
-	static uint32_t time = 0;
+	results.raw = 0;
+	results.filtered = 0;
+	results.percent = 0;
+	filter.filled = 0;
+	filter.index = 0;
+	filter.sum = 0;
+	for (uint16_t i = 0; i < (sizeof(filter.window)/sizeof(filter.window[0])); ++i)
+	{
+		filter.window[i] = 0;
+	}
+}
 
+adc_results_t app_run(void)
+{
 	adc_read_raw_blocking(&results);
 	adc_filter_ma(&filter, &results);
 
 	results.percent = adc_result_to_percent(results.filtered);
 
-	if (APP_ENABLE_LOG)
-	{
-		time += measure_period;
-		snprintf(string_buff, sizeof(string_buff), "%ld %04d %04d %u",
-				time, results.raw, results.filtered, results.percent);
-
-		logger_sendln(string_buff);
-	}
+	return results;
 }

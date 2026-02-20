@@ -157,62 +157,45 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 }
 
 /**
-* @brief RTC MSP Initialization
+* @brief TIM_Base MSP Initialization
 * This function configures the hardware resources used in this example
-* @param hrtc: RTC handle pointer
+* @param htim_base: TIM_Base handle pointer
 * @retval None
 */
-void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
 {
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-  if(hrtc->Instance==RTC)
+  if(htim_base->Instance==TIM6)
   {
-  /* USER CODE BEGIN RTC_MspInit 0 */
+  /* USER CODE BEGIN TIM6_MspInit 0 */
 
-  /* USER CODE END RTC_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
-    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
+  /* USER CODE END TIM6_MspInit 0 */
     /* Peripheral clock enable */
-    __HAL_RCC_RTC_ENABLE();
-    /* RTC interrupt Init */
-    HAL_NVIC_SetPriority(RTC_WKUP_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(RTC_WKUP_IRQn);
-  /* USER CODE BEGIN RTC_MspInit 1 */
+    __HAL_RCC_TIM6_CLK_ENABLE();
+  /* USER CODE BEGIN TIM6_MspInit 1 */
 
-  /* USER CODE END RTC_MspInit 1 */
+  /* USER CODE END TIM6_MspInit 1 */
   }
 
 }
 
 /**
-* @brief RTC MSP De-Initialization
+* @brief TIM_Base MSP De-Initialization
 * This function freeze the hardware resources used in this example
-* @param hrtc: RTC handle pointer
+* @param htim_base: TIM_Base handle pointer
 * @retval None
 */
-void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc)
+void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
 {
-  if(hrtc->Instance==RTC)
+  if(htim_base->Instance==TIM6)
   {
-  /* USER CODE BEGIN RTC_MspDeInit 0 */
+  /* USER CODE BEGIN TIM6_MspDeInit 0 */
 
-  /* USER CODE END RTC_MspDeInit 0 */
+  /* USER CODE END TIM6_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_RTC_DISABLE();
+    __HAL_RCC_TIM6_CLK_DISABLE();
+  /* USER CODE BEGIN TIM6_MspDeInit 1 */
 
-    /* RTC interrupt DeInit */
-    HAL_NVIC_DisableIRQ(RTC_WKUP_IRQn);
-  /* USER CODE BEGIN RTC_MspDeInit 1 */
-
-  /* USER CODE END RTC_MspDeInit 1 */
+  /* USER CODE END TIM6_MspDeInit 1 */
   }
 
 }
